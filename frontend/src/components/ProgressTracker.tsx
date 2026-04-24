@@ -27,8 +27,8 @@ interface Props {
 function StepIcon({ status }: { status: StepStatus }) {
   if (status === "done") {
     return (
-      <div className="flex items-center justify-center w-7 h-7 rounded-full bg-green-100 border-2 border-green-500">
-        <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="flex items-center justify-center w-7 h-7 rounded-full bg-green-100 dark:bg-green-900/30 border-2 border-green-500">
+        <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
       </div>
@@ -36,8 +36,8 @@ function StepIcon({ status }: { status: StepStatus }) {
   }
   if (status === "running") {
     return (
-      <div className="flex items-center justify-center w-7 h-7 rounded-full bg-indigo-100 border-2 border-indigo-500">
-        <svg className="animate-spin w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24">
+      <div className="flex items-center justify-center w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 border-2 border-indigo-500">
+        <svg className="animate-spin w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
         </svg>
@@ -46,14 +46,14 @@ function StepIcon({ status }: { status: StepStatus }) {
   }
   if (status === "error") {
     return (
-      <div className="flex items-center justify-center w-7 h-7 rounded-full bg-red-100 border-2 border-red-500">
-        <span className="text-red-600 text-xs font-bold">✕</span>
+      <div className="flex items-center justify-center w-7 h-7 rounded-full bg-red-100 dark:bg-red-900/30 border-2 border-red-500">
+        <span className="text-red-600 dark:text-red-400 text-xs font-bold">✕</span>
       </div>
     );
   }
   return (
-    <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gray-100 border-2 border-gray-300">
-      <div className="w-2 h-2 rounded-full bg-gray-300" />
+    <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600">
+      <div className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-500" />
     </div>
   );
 }
@@ -68,18 +68,18 @@ export default function ProgressTracker({ stepStatuses }: Props) {
             <div className="flex flex-col items-center">
               <StepIcon status={status} />
               {idx < STEPS.length - 1 && (
-                <div className={`w-0.5 h-5 mt-1 ${status === "done" ? "bg-green-300" : "bg-gray-200"}`} />
+                <div className={`w-0.5 h-5 mt-1 ${status === "done" ? "bg-green-300 dark:bg-green-700" : "bg-gray-200 dark:bg-gray-700"}`} />
               )}
             </div>
             <span
               className={`text-sm ${
                 status === "running"
-                  ? "text-indigo-700 font-semibold"
+                  ? "text-indigo-700 dark:text-indigo-400 font-semibold"
                   : status === "done"
-                  ? "text-green-700"
+                  ? "text-green-700 dark:text-green-400"
                   : status === "error"
-                  ? "text-red-600"
-                  : "text-gray-400"
+                  ? "text-red-600 dark:text-red-400"
+                  : "text-gray-400 dark:text-gray-500"
               }`}
             >
               {step.label}

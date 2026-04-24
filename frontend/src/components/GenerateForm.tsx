@@ -79,7 +79,6 @@ export default function GenerateForm() {
         });
       },
       (docBase64, fileName) => {
-        // Mark everything done
         setStepStatuses(() => {
           const next: Record<number, StepStatus> = {};
           for (let i = 0; i <= 11; i++) next[i] = "done";
@@ -99,7 +98,6 @@ export default function GenerateForm() {
         setGenerating(false);
         setStepStatuses((prev) => {
           const next = { ...prev };
-          // mark running step as error
           for (const [k, v] of Object.entries(next)) {
             if (v === "running") next[Number(k)] = "error";
           }
@@ -112,18 +110,18 @@ export default function GenerateForm() {
   return (
     <div className="max-w-2xl mx-auto py-10 px-4 space-y-8">
       {/* Metadata */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-gray-800">Content Details</h2>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Content Details</h2>
 
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
               Class
             </label>
             <select
               value={classNum}
               onChange={(e) => setClassNum(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             >
               <option value="">Select</option>
               {CLASS_OPTIONS.map((c) => (
@@ -135,7 +133,7 @@ export default function GenerateForm() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
               Subject
             </label>
             <input
@@ -143,12 +141,12 @@ export default function GenerateForm() {
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="e.g. Mathematics"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
               Chapter
             </label>
             <input
@@ -156,16 +154,16 @@ export default function GenerateForm() {
               value={chapter}
               onChange={(e) => setChapter(e.target.value)}
               placeholder="e.g. Number System"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
         </div>
       </div>
 
       {/* File Uploads */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-3">
-        <h2 className="text-lg font-semibold text-gray-800">Upload Files</h2>
-        <p className="text-xs text-gray-400">Syllabus PDF is required. Others are optional but improve output quality.</p>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 space-y-3">
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Upload Files</h2>
+        <p className="text-xs text-gray-400 dark:text-gray-500">Syllabus PDF is required. Others are optional but improve output quality.</p>
         <div className="grid grid-cols-2 gap-3">
           {FILE_FIELDS.map(({ fieldName, label }) => (
             <FileUpload
@@ -186,7 +184,7 @@ export default function GenerateForm() {
         className={`w-full py-3 rounded-xl font-semibold text-sm transition-all ${
           canGenerate
             ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md"
-            : "bg-gray-200 text-gray-400 cursor-not-allowed"
+            : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
         }`}
       >
         {generating ? "Generating…" : "Generate Content"}
@@ -194,25 +192,25 @@ export default function GenerateForm() {
 
       {/* Progress */}
       {Object.keys(stepStatuses).length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Progress</h2>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Progress</h2>
           <ProgressTracker stepStatuses={stepStatuses} />
         </div>
       )}
 
       {/* Error */}
       {errorMsg && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-sm text-red-700 dark:text-red-400">
           {errorMsg}
         </div>
       )}
 
       {/* Download */}
       {docUrl && (
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between">
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold text-green-800">Content generated successfully!</p>
-            <p className="text-xs text-green-600">{docFileName}</p>
+            <p className="text-sm font-semibold text-green-800 dark:text-green-300">Content generated successfully!</p>
+            <p className="text-xs text-green-600 dark:text-green-400">{docFileName}</p>
           </div>
           <button
             onClick={downloadDoc}
