@@ -8,11 +8,11 @@ node_modules/
 system_prompt.md
 
 # Local working files
+*.docx
+*.txt
 All Chapters.pdf
 Syllabus Maths_SecP1IX_2026-27.pdf
-Vertex AI Math IX.docx
 Ans.pdf
 Chapter 1.pdf
 implementation.md
 Maths XI-XII_SecP2_2026-27.pdf
-Vertex AI Global Prompt 2.docx

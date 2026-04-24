@@ -17,7 +17,7 @@ WORKERS = [
         prompt=(
             "[WORKER_TASK = CORE_LEARNING]\n"
             "Class {class_num} {subject}, Chapter: {chapter}.\n"
-            "Return ONLY valid JSON matching the WORKER 1 schema exactly."
+            "Output Markdown only. Follow the WORKER 1 template."
         ),
     ),
     WorkerDefinition(
@@ -27,7 +27,8 @@ WORKERS = [
         prompt=(
             "[WORKER_TASK = MEMORY]\n"
             "Class {class_num} {subject}, Chapter: {chapter}.\n"
-            "Return ONLY valid JSON matching the WORKER 2 schema exactly."
+            "Output Markdown only. Follow the WORKER 2 template. "
+            "Include exactly 6 flashcards and exactly 6 key terms."
         ),
     ),
     WorkerDefinition(
@@ -35,9 +36,9 @@ WORKERS = [
         name="mcqs",
         display_name="MCQs",
         prompt=(
-            "[WORKER_TASK = GENERATE_MCQS_25]\n"
+            "[WORKER_TASK = MCQ]\n"
             "Class {class_num} {subject}, Chapter: {chapter}.\n"
-            "Return ONLY valid JSON with key 'mcqs' — an array of exactly 25 MCQ objects."
+            "Output Markdown only. Generate exactly 4 MCQs per the WORKER 3 template."
         ),
     ),
     WorkerDefinition(
@@ -45,9 +46,9 @@ WORKERS = [
         name="very_short",
         display_name="Very Short Questions",
         prompt=(
-            "[WORKER_TASK = GENERATE_VERY_SHORT_25]\n"
+            "[WORKER_TASK = VERY_SHORT]\n"
             "Class {class_num} {subject}, Chapter: {chapter}.\n"
-            "Return ONLY valid JSON with key 'very_short' — an array of exactly 25 very short Q&A objects."
+            "Output Markdown only. Generate exactly 2 very short Q&A pairs per the WORKER 3 template."
         ),
     ),
     WorkerDefinition(
@@ -55,9 +56,9 @@ WORKERS = [
         name="short_answer",
         display_name="Short Answer Questions",
         prompt=(
-            "[WORKER_TASK = GENERATE_SHORT_25]\n"
+            "[WORKER_TASK = SHORT]\n"
             "Class {class_num} {subject}, Chapter: {chapter}.\n"
-            "Return ONLY valid JSON with key 'short_answer' — an array of exactly 25 short answer Q&A objects."
+            "Output Markdown only. Generate exactly 2 short answer Q&A pairs per the WORKER 3 template."
         ),
     ),
     WorkerDefinition(
@@ -65,9 +66,9 @@ WORKERS = [
         name="medium_answer",
         display_name="Medium Answer Questions",
         prompt=(
-            "[WORKER_TASK = GENERATE_MEDIUM_25]\n"
+            "[WORKER_TASK = MEDIUM]\n"
             "Class {class_num} {subject}, Chapter: {chapter}.\n"
-            "Return ONLY valid JSON with key 'medium_answer' — an array of exactly 25 medium answer Q&A objects."
+            "Output Markdown only. Generate exactly 3 medium answer Q&A pairs per the WORKER 4 template."
         ),
     ),
     WorkerDefinition(
@@ -75,9 +76,9 @@ WORKERS = [
         name="long_answer",
         display_name="Long Answer Questions",
         prompt=(
-            "[WORKER_TASK = GENERATE_LONG_20]\n"
+            "[WORKER_TASK = LONG]\n"
             "Class {class_num} {subject}, Chapter: {chapter}.\n"
-            "Return ONLY valid JSON with key 'long_answer' — an array of exactly 20 long answer Q&A objects."
+            "Output Markdown only. Generate exactly 1 long answer Q&A per the WORKER 4 template."
         ),
     ),
     WorkerDefinition(
@@ -85,9 +86,9 @@ WORKERS = [
         name="assertion_reason",
         display_name="Assertion-Reason",
         prompt=(
-            "[WORKER_TASK = GENERATE_ASSERTION_15]\n"
+            "[WORKER_TASK = ASSERTION]\n"
             "Class {class_num} {subject}, Chapter: {chapter}.\n"
-            "Return ONLY valid JSON with key 'assertion_reason' — an array of exactly 15 assertion-reason objects."
+            "Output Markdown only. Generate exactly 3 assertion-reason items per the WORKER 4 template."
         ),
     ),
     WorkerDefinition(
@@ -95,9 +96,9 @@ WORKERS = [
         name="case_studies",
         display_name="Case Studies",
         prompt=(
-            "[WORKER_TASK = GENERATE_CASE_10]\n"
+            "[WORKER_TASK = CASE_STUDY]\n"
             "Class {class_num} {subject}, Chapter: {chapter}.\n"
-            "Return ONLY valid JSON with key 'case_studies' — an array of exactly 10 case study objects, each with exactly 4 sub-questions (sub_id: a, b, c, d)."
+            "Output Markdown only. Generate exactly 1 case study with exactly 4 sub-questions per the WORKER 4 template."
         ),
     ),
     WorkerDefinition(
@@ -107,7 +108,7 @@ WORKERS = [
         prompt=(
             "[WORKER_TASK = GENERATE_TESTS]\n"
             "Class {class_num} {subject}, Chapter: {chapter}.\n"
-            "Return ONLY valid JSON with key 'tests' — an array of exactly 2 test objects per the WORKER 5 schema."
+            "Output Markdown only. Generate exactly 1 complete test per the WORKER 5 template."
         ),
     ),
 ]

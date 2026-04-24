@@ -1,7 +1,5 @@
 import asyncio
-import json
 import os
-import re
 import time
 import uuid
 
@@ -21,7 +19,7 @@ SYSTEM_PROMPT_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "system
 with open(SYSTEM_PROMPT_PATH, "r", encoding="utf-8") as f:
     SYSTEM_PROMPT = f.read()
 
-MODEL = "moonshotai/kimi-k2.5"
+MODEL = "moonshotai/kimi-k2.6"
 
 _LOGS_DIR = os.path.join(os.path.dirname(__file__), "..", "logs")
 
@@ -77,13 +75,6 @@ async def upload_file(file_bytes: bytes, filename: str, mime_type: str) -> dict:
     return {"uri": f"local://{file_id}", "mime_type": "application/pdf"}
 
 
-def _strip_json_fences(text: str) -> str:
-    text = text.strip()
-    text = re.sub(r"^```(?:json)?\s*", "", text)
-    text = re.sub(r"\s*```$", "", text)
-    return text.strip()
-
-
 def _dump_failed_raw(raw: str) -> None:
     try:
         os.makedirs(_LOGS_DIR, exist_ok=True)
@@ -136,22 +127,6 @@ def _stream_completion(client: OpenAI, messages: list[dict]) -> tuple[str, str |
     return raw, finish_reason, token_usage
 
 
-def _parse_or_repair(raw: str, finish_reason: str | None) -> dict:
-    """Parse JSON from raw text. Raises TruncatedOutputError on length stop, uses json_repair as last resort."""
-    if finish_reason == "length":
-        raise TruncatedOutputError(
-            f"Worker output was truncated by the model (finish_reason=length, {len(raw)} chars). "
-            "The response hit a provider-side token limit before the JSON was complete."
-        )
-
-    cleaned = _strip_json_fences(raw)
-    try:
-        return json.loads(cleaned)
-    except json.JSONDecodeError as e:
-        _dump_failed_raw(raw)
-        return None, e  # signal caller to retry
-
-
 async def run_worker(file_uris: list, worker_prompt: str) -> dict:
     client = get_client()
     loop = asyncio.get_event_loop()
@@ -170,45 +145,36 @@ async def run_worker(file_uris: list, worker_prompt: str) -> dict:
         base_messages = _base_messages_cache[cache_key]
         messages = base_messages + [{"role": "user", "content": worker_prompt}]
 
-        # First attempt
         raw, finish_reason, token_usage = _stream_completion(client, messages)
 
-        result = _parse_or_repair(raw, finish_reason)
+        if finish_reason == "length":
+            raise TruncatedOutputError(
+                f"Worker output was truncated (finish_reason=length, {len(raw)} chars). "
+                "Hit provider-side token limit before output was complete."
+            )
 
-        if isinstance(result, tuple):
-            # Parse failed — result is (None, JSONDecodeError)
-            parse_error = result[1]
+        result = raw.strip()
 
-            # Corrective retry: replay with the malformed output + nudge
+        # Retry if output is empty or a fail-fast error signal
+        if not result or result == "ERROR: CONSTRAINT_VIOLATION":
+            _dump_failed_raw(raw)
             retry_messages = messages + [
                 {"role": "assistant", "content": raw},
                 {
                     "role": "user",
                     "content": (
-                        f"Your previous reply was not valid JSON (error: {parse_error}). "
-                        "Resend only the complete, valid JSON object. No prose, no code fences."
+                        "Your previous reply was empty or returned a constraint violation. "
+                        "Please provide the complete Markdown output now."
                     ),
                 },
             ]
             retry_raw, retry_finish_reason, retry_usage = _stream_completion(client, retry_messages)
-
-            # Accumulate token usage across both calls
             token_usage = {
                 "input": token_usage["input"] + retry_usage["input"],
                 "cached": token_usage["cached"] + retry_usage["cached"],
                 "output": token_usage["output"] + retry_usage["output"],
             }
-
-            retry_result = _parse_or_repair(retry_raw, retry_finish_reason)
-
-            if isinstance(retry_result, tuple):
-                # Retry also failed — fall back to json_repair
-                from json_repair import repair_json
-                print("[K2.5] REPAIR USED — both attempts produced malformed JSON")
-                cleaned = _strip_json_fences(retry_raw)
-                result = json.loads(repair_json(cleaned))
-            else:
-                result = retry_result
+            result = retry_raw.strip()
 
         return {"result": result, "usage": token_usage}
 
