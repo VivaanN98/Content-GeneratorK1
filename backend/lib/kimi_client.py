@@ -19,7 +19,7 @@ SYSTEM_PROMPT_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "system
 with open(SYSTEM_PROMPT_PATH, "r", encoding="utf-8") as f:
     SYSTEM_PROMPT = f.read()
 
-MODEL = "moonshotai/kimi-k2.6"
+MODEL = "kimi-k2.6"
 
 _LOGS_DIR = os.path.join(os.path.dirname(__file__), "..", "logs")
 
@@ -33,18 +33,14 @@ def get_client() -> OpenAI:
     if _client is None:
         env_path = os.path.join(os.path.dirname(__file__), "..", ".env")
         load_dotenv(env_path, override=True)
-        api_key = os.getenv("OPENROUTER_API_KEY")
+        api_key = os.getenv("MOONSHOT_API_KEY")
         if not api_key:
-            raise ValueError("OPENROUTER_API_KEY environment variable is not set")
+            raise ValueError("MOONSHOT_API_KEY environment variable is not set")
         print(f"[K2.5] Using API key: {api_key[:8]}...{api_key[-4:]}")
         _client = OpenAI(
             api_key=api_key,
-            base_url="https://openrouter.ai/api/v1",
+            base_url="https://api.moonshot.ai/v1",
             timeout=300.0,
-            default_headers={
-                "HTTP-Referer": "http://localhost:8000",
-                "X-Title": "Better Learning Content Generator",
-            },
         )
     return _client
 
@@ -181,7 +177,7 @@ async def run_worker(file_uris: list, worker_prompt: str) -> dict:
     return await loop.run_in_executor(None, _run)
 
 
-PARSE_MODEL = "moonshotai/kimi-k2.5"
+PARSE_MODEL = "kimi-k2.5"
 
 _PARSE_SYSTEM = (
     "You extract chapter lists from CBSE syllabus documents. "

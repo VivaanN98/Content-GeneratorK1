@@ -18,7 +18,7 @@ A single `.docx` file containing all of the following, produced in parallel:
 
 - **Backend:** Python + FastAPI (`backend/`) — port 8000
 - **Frontend:** Vite + React + TypeScript (`frontend/`) — port 5173
-- **LLM:** `moonshotai/kimi-k2.5` via OpenRouter
+- **LLM:** `kimi-k2.6` via Moonshot AI platform
 - **PDF extraction:** PyMuPDF (local, no remote file API)
 - **Output:** `python-docx` → `.docx` download
 
@@ -35,7 +35,7 @@ pip install -r requirements.txt
 
 Create `backend/.env`:
 ```
-OPENROUTER_API_KEY=sk-or-v1-...
+MOONSHOT_API_KEY=sk-...
 ```
 
 Start the server:
