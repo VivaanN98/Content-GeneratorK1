@@ -7,11 +7,12 @@ interface Props {
   fieldName: string;
   onUploaded: (result: FileUploadResult) => void;
   onClear: () => void;
+  disabled?: boolean;
 }
 
 type UploadState = "idle" | "uploading" | "done" | "error";
 
-export default function FileUpload({ label, fieldName, onUploaded, onClear }: Props) {
+export default function FileUpload({ label, fieldName, onUploaded, onClear, disabled = false }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [state, setState] = useState<UploadState>("idle");
   const [fileName, setFileName] = useState("");
@@ -71,16 +72,17 @@ export default function FileUpload({ label, fieldName, onUploaded, onClear }: Pr
 
   return (
     <div
-      className={`relative border-2 border-dashed rounded-xl p-4 cursor-pointer transition-colors ${borderColor} bg-white dark:bg-gray-800`}
-      onClick={() => state === "idle" && inputRef.current?.click()}
+      className={`relative border-2 border-dashed rounded-xl p-4 transition-colors ${borderColor} bg-white dark:bg-gray-800 ${disabled ? "opacity-40 pointer-events-none cursor-not-allowed" : "cursor-pointer"}`}
+      onClick={() => !disabled && state === "idle" && inputRef.current?.click()}
       onDragOver={(e) => e.preventDefault()}
-      onDrop={handleDrop}
+      onDrop={(e) => { if (!disabled) handleDrop(e); }}
     >
       <input
         ref={inputRef}
         type="file"
         accept=".pdf"
         className="hidden"
+        disabled={disabled}
         onChange={handleChange}
       />
 

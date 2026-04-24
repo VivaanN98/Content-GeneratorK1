@@ -1,7 +1,7 @@
 import { useState } from "react";
 import FileUpload from "./FileUpload";
 import ProgressTracker from "./ProgressTracker";
-import { generateContent } from "../lib/api";
+import { generateContent, parseSyllabus } from "../lib/api";
 import type { FileUploadResult } from "../lib/api";
 
 type StepStatus = "pending" | "running" | "done" | "error";
@@ -17,11 +17,19 @@ const FILE_FIELDS = [
 
 type FieldName = (typeof FILE_FIELDS)[number]["fieldName"];
 
+const OPTIONAL_FIELDS: FieldName[] = ["chapter", "answers", "all_chapters"];
+
 export default function GenerateForm() {
   const [classNum, setClassNum] = useState("");
   const [subject, setSubject] = useState("");
   const [chapter, setChapter] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<Partial<Record<FieldName, FileUploadResult>>>({});
+
+  // Chapter-picker state
+  const [chapters, setChapters] = useState<string[]>([]);
+  const [loadingChapters, setLoadingChapters] = useState(false);
+  const [chaptersError, setChaptersError] = useState<string | null>(null);
+  const [manualMode, setManualMode] = useState(false);
 
   const [generating, setGenerating] = useState(false);
   const [stepStatuses, setStepStatuses] = useState<Record<number, StepStatus>>({});
@@ -30,10 +38,35 @@ export default function GenerateForm() {
   const [docFileName, setDocFileName] = useState("");
 
   const syllabusUploaded = !!uploadedFiles["syllabus"];
+  const chaptersLoaded = chapters.length > 0;
+  const optionalUploadsDisabled = chaptersLoaded;
+
+  // Load Chapters button enabled when all three prerequisites are met and we're not already in picker/manual mode
+  const canLoadChapters =
+    !!classNum && !!subject && syllabusUploaded && !chaptersLoaded && !loadingChapters && !manualMode;
+
   const canGenerate = classNum && subject && chapter && syllabusUploaded && !generating;
+
+  function resetChapterState() {
+    setChapters([]);
+    setChaptersError(null);
+    setManualMode(false);
+    setChapter("");
+  }
+
+  function handleClassChange(val: string) {
+    setClassNum(val);
+    resetChapterState();
+  }
+
+  function handleSubjectChange(val: string) {
+    setSubject(val);
+    resetChapterState();
+  }
 
   function handleUploaded(fieldName: FieldName, result: FileUploadResult) {
     setUploadedFiles((prev) => ({ ...prev, [fieldName]: result }));
+    if (fieldName === "syllabus") resetChapterState();
   }
 
   function handleClear(fieldName: FieldName) {
@@ -42,6 +75,22 @@ export default function GenerateForm() {
       delete next[fieldName];
       return next;
     });
+    if (fieldName === "syllabus") resetChapterState();
+  }
+
+  async function handleLoadChapters() {
+    const syllabusResult = uploadedFiles["syllabus"];
+    if (!syllabusResult) return;
+    setLoadingChapters(true);
+    setChaptersError(null);
+    try {
+      const list = await parseSyllabus(syllabusResult.uri, classNum, subject);
+      setChapters(list);
+    } catch (err: unknown) {
+      setChaptersError(err instanceof Error ? err.message : "Failed to parse syllabus.");
+    } finally {
+      setLoadingChapters(false);
+    }
   }
 
   function downloadDoc() {
@@ -58,7 +107,10 @@ export default function GenerateForm() {
     setErrorMsg("");
     setDocUrl(null);
 
-    const fileUris = Object.values(uploadedFiles).filter(Boolean) as FileUploadResult[];
+    // When chapters are loaded (Path B), only pass the syllabus PDF
+    const fileUris = chaptersLoaded
+      ? [uploadedFiles["syllabus"]!]
+      : (Object.values(uploadedFiles).filter(Boolean) as FileUploadResult[]);
 
     generateContent(
       { class_num: classNum, subject, chapter, file_uris: fileUris },
@@ -120,7 +172,7 @@ export default function GenerateForm() {
             </label>
             <select
               value={classNum}
-              onChange={(e) => setClassNum(e.target.value)}
+              onChange={(e) => handleClassChange(e.target.value)}
               className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             >
               <option value="">Select</option>
@@ -139,7 +191,7 @@ export default function GenerateForm() {
             <input
               type="text"
               value={subject}
-              onChange={(e) => setSubject(e.target.value)}
+              onChange={(e) => handleSubjectChange(e.target.value)}
               placeholder="e.g. Mathematics"
               className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
@@ -149,13 +201,28 @@ export default function GenerateForm() {
             <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
               Chapter
             </label>
-            <input
-              type="text"
-              value={chapter}
-              onChange={(e) => setChapter(e.target.value)}
-              placeholder="e.g. Number System"
-              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
+            {chaptersLoaded ? (
+              <select
+                value={chapter}
+                onChange={(e) => setChapter(e.target.value)}
+                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              >
+                <option value="">Select chapter…</option>
+                {chapters.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                value={chapter}
+                onChange={(e) => setChapter(e.target.value)}
+                placeholder="e.g. Number System"
+                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+            )}
           </div>
         </div>
       </div>
@@ -170,10 +237,65 @@ export default function GenerateForm() {
               key={fieldName}
               label={label}
               fieldName={fieldName}
+              disabled={OPTIONAL_FIELDS.includes(fieldName as FieldName) && optionalUploadsDisabled}
               onUploaded={(result) => handleUploaded(fieldName, result)}
               onClear={() => handleClear(fieldName)}
             />
           ))}
+        </div>
+
+        {/* Load Chapters row */}
+        <div className="pt-1 space-y-2">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleLoadChapters}
+              disabled={!canLoadChapters}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                canLoadChapters
+                  ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/50"
+                  : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 border border-gray-200 dark:border-gray-700 cursor-not-allowed"
+              }`}
+            >
+              {loadingChapters ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                  Loading chapters…
+                </>
+              ) : (
+                "Load Chapters from Syllabus"
+              )}
+            </button>
+
+            {(chaptersLoaded || manualMode || chaptersError) && (
+              <button
+                onClick={resetChapterState}
+                className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+              >
+                Reset
+              </button>
+            )}
+          </div>
+
+          {chaptersError && (
+            <div className="text-sm text-red-600 dark:text-red-400 space-y-1">
+              <p>{chaptersError}</p>
+              <button
+                onClick={() => { setManualMode(true); setChaptersError(null); }}
+                className="text-indigo-600 dark:text-indigo-400 hover:underline text-xs"
+              >
+                Enter chapter manually instead
+              </button>
+            </div>
+          )}
+
+          {chaptersLoaded && (
+            <p className="text-xs text-indigo-600 dark:text-indigo-400">
+              {chapters.length} chapters loaded — select one above. Other PDF uploads are disabled for this path.
+            </p>
+          )}
         </div>
       </div>
 

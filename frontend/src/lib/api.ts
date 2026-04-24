@@ -20,6 +20,32 @@ export interface GenerateParams {
   file_uris: FileUploadResult[];
 }
 
+export async function parseSyllabus(
+  syllabusUri: string,
+  classNum: string,
+  subject: string
+): Promise<string[]> {
+  const res = await fetch(`${API_URL}/api/parse-syllabus`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ syllabus_uri: syllabusUri, class_num: classNum, subject }),
+  });
+
+  if (!res.ok) {
+    let detail = `Parse failed (${res.status})`;
+    try {
+      const body = await res.json();
+      if (body.detail) detail = body.detail;
+    } catch {
+      // ignore
+    }
+    throw new Error(detail);
+  }
+
+  const data = await res.json();
+  return data.chapters as string[];
+}
+
 export async function uploadFile(
   file: File,
   fieldName: string

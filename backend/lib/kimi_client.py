@@ -86,10 +86,10 @@ def _dump_failed_raw(raw: str) -> None:
         print(f"[K2.5] Could not save raw output: {e}")
 
 
-def _stream_completion(client: OpenAI, messages: list[dict]) -> tuple[str, str | None, dict]:
+def _stream_completion(client: OpenAI, messages: list[dict], model: str = MODEL) -> tuple[str, str | None, dict]:
     """Returns (raw_text, finish_reason, token_usage)."""
     stream = client.chat.completions.create(
-        model=MODEL,
+        model=model,
         messages=messages,
         max_completion_tokens=65536,
         temperature=1.0,
@@ -177,5 +177,63 @@ async def run_worker(file_uris: list, worker_prompt: str) -> dict:
             result = retry_raw.strip()
 
         return {"result": result, "usage": token_usage}
+
+    return await loop.run_in_executor(None, _run)
+
+
+PARSE_MODEL = "moonshotai/kimi-k2.5"
+
+_PARSE_SYSTEM = (
+    "You extract chapter lists from CBSE syllabus documents. "
+    'Return only valid JSON in the form {"chapters": ["Chapter name 1", ...]}. '
+    "No prose, no markdown fences."
+)
+
+
+async def parse_syllabus_chapters(syllabus_uri: str, class_num: str, subject: str) -> list[str]:
+    client = get_client()
+    loop = asyncio.get_event_loop()
+
+    def _run() -> list[str]:
+        file_id = syllabus_uri[len("local://"):]
+        syllabus_text = _file_content_cache.get(file_id, "")
+        if not syllabus_text.strip():
+            raise ValueError("Syllabus file contains no extractable text. Try a text-based PDF.")
+
+        messages = [
+            {"role": "system", "content": _PARSE_SYSTEM},
+            {
+                "role": "user",
+                "content": (
+                    f"Extract the list of chapters for Class {class_num} {subject} "
+                    f"from the syllabus below. If the document covers multiple classes, "
+                    f"include only chapters belonging to Class {class_num}.\n\n"
+                    f"{syllabus_text}"
+                ),
+            },
+        ]
+
+        raw, finish_reason, usage = _stream_completion(client, messages, model=PARSE_MODEL)
+        print(
+            f"[K2.5 PARSE] in={usage['input']} (cached={usage['cached']}) "
+            f"out={usage['output']} | finish={finish_reason} | len={len(raw)}"
+        )
+
+        import json as _json
+        try:
+            text = raw.strip()
+            # Strip markdown fences if the model ignores the instruction
+            if text.startswith("```"):
+                text = text.split("```")[1]
+                if text.startswith("json"):
+                    text = text[4:]
+            data = _json.loads(text)
+            chapters = data.get("chapters", [])
+            if not isinstance(chapters, list) or not chapters:
+                raise ValueError("Parsed JSON has no chapters list.")
+            return [str(c) for c in chapters if str(c).strip()]
+        except Exception as exc:
+            _dump_failed_raw(raw)
+            raise ValueError(f"Could not parse chapter list from syllabus: {exc}") from exc
 
     return await loop.run_in_executor(None, _run)

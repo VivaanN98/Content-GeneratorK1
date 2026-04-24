@@ -1,9 +1,10 @@
 import asyncio
 import base64
+import concurrent.futures
 import os
 import time
 from dotenv import load_dotenv
-from fastapi import FastAPI, UploadFile, Form
+from fastapi import FastAPI, HTTPException, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -11,15 +12,26 @@ import json
 
 load_dotenv()
 
+# Sized for 5 concurrent users × 10 parallel workers = 50 simultaneous blocking LLM calls.
+# Threads sleep on network I/O so this is safe on low-CPU hosts.
+_executor = concurrent.futures.ThreadPoolExecutor(max_workers=64)
+
 app = FastAPI(title="Vertex AI Content Generator")
 
+_cors_env = os.getenv("CORS_ORIGINS", "http://localhost:5173")
+_cors_origins = [o.strip() for o in _cors_env.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+async def _install_executor():
+    asyncio.get_event_loop().set_default_executor(_executor)
 
 
 class FileUri(BaseModel):
@@ -33,6 +45,12 @@ class GenerateRequest(BaseModel):
     subject: str
     chapter: str
     file_uris: list[FileUri]
+
+
+class ParseSyllabusRequest(BaseModel):
+    syllabus_uri: str
+    class_num: str
+    subject: str
 
 
 def sse_event(event: str, data: dict) -> str:
@@ -50,6 +68,18 @@ async def upload_file_endpoint(file: UploadFile, field_name: str = Form(...)):
         "field_name": field_name,
         "file_name": file.filename,
     }
+
+
+@app.post("/api/parse-syllabus")
+async def parse_syllabus_endpoint(request: ParseSyllabusRequest):
+    from lib.kimi_client import parse_syllabus_chapters
+    try:
+        chapters = await parse_syllabus_chapters(request.syllabus_uri, request.class_num, request.subject)
+        return {"chapters": chapters}
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Syllabus parsing failed: {e}")
 
 
 @app.post("/api/generate")
