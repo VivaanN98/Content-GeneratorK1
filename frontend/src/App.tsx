@@ -2,18 +2,23 @@ import { useState } from "react";
 import GenerateForm from "./components/GenerateForm";
 
 export default function App() {
-  const [isDark, setIsDark] = useState(() => localStorage.getItem("theme") === "dark");
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem("theme") === "dark";
+    if (saved) document.documentElement.classList.add("dark");
+    return saved;
+  });
 
   function toggleDark() {
     setIsDark((prev) => {
       const next = !prev;
       localStorage.setItem("theme", next ? "dark" : "light");
+      document.documentElement.classList.toggle("dark", next);
       return next;
     });
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:bg-none dark:bg-gray-950${isDark ? " dark" : ""}`}>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:bg-none dark:bg-gray-950">
       <header className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">

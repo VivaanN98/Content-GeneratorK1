@@ -7,3 +7,8 @@ body {
   background: #f8f7fa;
   color: #1a1a2e;
 }
+
+.dark body {
+  background: #0f172a;
+  color: #f1f5f9;
+}
