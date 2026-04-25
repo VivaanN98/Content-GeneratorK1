@@ -27,8 +27,7 @@ WORKERS = [
         prompt=(
             "[WORKER_TASK = MEMORY]\n"
             "Class {class_num} {subject}, Chapter: {chapter}.\n"
-            "Output Markdown only. Follow the WORKER 2 template. "
-            "Include exactly 6 flashcards and exactly 6 key terms."
+            "Output Markdown only. Follow the WORKER 2 template exactly."
         ),
     ),
     WorkerDefinition(
@@ -38,7 +37,7 @@ WORKERS = [
         prompt=(
             "[WORKER_TASK = MCQ]\n"
             "Class {class_num} {subject}, Chapter: {chapter}.\n"
-            "Output Markdown only. Generate exactly 4 MCQs per the WORKER 3 template."
+            "Output Markdown only. Follow the WORKER 3 template exactly."
         ),
     ),
     WorkerDefinition(
@@ -48,7 +47,7 @@ WORKERS = [
         prompt=(
             "[WORKER_TASK = VERY_SHORT]\n"
             "Class {class_num} {subject}, Chapter: {chapter}.\n"
-            "Output Markdown only. Generate exactly 2 very short Q&A pairs per the WORKER 3 template."
+            "Output Markdown only. Generate Worker 4 Batch 1 exactly as specified: Very Short Answer."
         ),
     ),
     WorkerDefinition(
@@ -58,7 +57,7 @@ WORKERS = [
         prompt=(
             "[WORKER_TASK = SHORT]\n"
             "Class {class_num} {subject}, Chapter: {chapter}.\n"
-            "Output Markdown only. Generate exactly 2 short answer Q&A pairs per the WORKER 3 template."
+            "Output Markdown only. Generate Worker 4 Batch 2 exactly as specified: Short Answer."
         ),
     ),
     WorkerDefinition(
@@ -68,7 +67,7 @@ WORKERS = [
         prompt=(
             "[WORKER_TASK = MEDIUM]\n"
             "Class {class_num} {subject}, Chapter: {chapter}.\n"
-            "Output Markdown only. Generate exactly 3 medium answer Q&A pairs per the WORKER 4 template."
+            "Output Markdown only. Generate Worker 5 Batch 1 exactly as specified: Medium Answer."
         ),
     ),
     WorkerDefinition(
@@ -78,7 +77,7 @@ WORKERS = [
         prompt=(
             "[WORKER_TASK = LONG]\n"
             "Class {class_num} {subject}, Chapter: {chapter}.\n"
-            "Output Markdown only. Generate exactly 1 long answer Q&A per the WORKER 4 template."
+            "Output Markdown only. Generate Worker 5 Batch 2 exactly as specified: Long Answer."
         ),
     ),
     WorkerDefinition(
@@ -88,7 +87,7 @@ WORKERS = [
         prompt=(
             "[WORKER_TASK = ASSERTION]\n"
             "Class {class_num} {subject}, Chapter: {chapter}.\n"
-            "Output Markdown only. Generate exactly 3 assertion-reason items per the WORKER 4 template."
+            "Output Markdown only. Generate Worker 5 Batch 3 exactly as specified: Assertion-Reason."
         ),
     ),
     WorkerDefinition(
@@ -98,7 +97,7 @@ WORKERS = [
         prompt=(
             "[WORKER_TASK = CASE_STUDY]\n"
             "Class {class_num} {subject}, Chapter: {chapter}.\n"
-            "Output Markdown only. Generate exactly 1 case study with exactly 4 sub-questions per the WORKER 4 template."
+            "Output Markdown only. Generate Worker 6 Batch 1 and Batch 2 exactly as specified: Case Studies 1-10."
         ),
     ),
     WorkerDefinition(
@@ -108,7 +107,7 @@ WORKERS = [
         prompt=(
             "[WORKER_TASK = GENERATE_TESTS]\n"
             "Class {class_num} {subject}, Chapter: {chapter}.\n"
-            "Output Markdown only. Generate exactly 1 complete test per the WORKER 5 template."
+            "Output Markdown only. Generate Worker 6 Batch 3 exactly as specified: Test 1, Test 2, and Exam Strategy."
         ),
     ),
 ]

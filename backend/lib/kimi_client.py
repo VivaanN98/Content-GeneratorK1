@@ -82,15 +82,19 @@ def _dump_failed_raw(raw: str) -> None:
         print(f"[K2.5] Could not save raw output: {e}")
 
 
-def _stream_completion(client: OpenAI, messages: list[dict], model: str = MODEL) -> tuple[str, str | None, dict]:
+def _stream_completion(client: OpenAI, messages: list[dict], model: str = MODEL, temperature: float = 0.6) -> tuple[str, str | None, dict]:
     """Returns (raw_text, finish_reason, token_usage)."""
+    extra: dict = {}
+    if model == MODEL:
+        extra["thinking"] = {"type": "disabled"}
     stream = client.chat.completions.create(
         model=model,
         messages=messages,
         max_completion_tokens=65536,
-        temperature=1.0,
+        temperature=temperature,
         stream=True,
         stream_options={"include_usage": True},
+        extra_body=extra or None,
     )
 
     raw = ""
@@ -154,13 +158,13 @@ async def run_worker(file_uris: list, worker_prompt: str) -> dict:
         # Retry if output is empty or a fail-fast error signal
         if not result or result == "ERROR: CONSTRAINT_VIOLATION":
             _dump_failed_raw(raw)
-            retry_messages = messages + [
-                {"role": "assistant", "content": raw},
+            retry_messages = base_messages + [
                 {
                     "role": "user",
                     "content": (
-                        "Your previous reply was empty or returned a constraint violation. "
-                        "Please provide the complete Markdown output now."
+                        f"{worker_prompt}\n\n"
+                        "Retry from scratch. Follow the requested worker or batch exactly as specified "
+                        "in the system prompt. Do not mention any previous failed attempt."
                     ),
                 },
             ]
@@ -209,7 +213,7 @@ async def parse_syllabus_chapters(syllabus_uri: str, class_num: str, subject: st
             },
         ]
 
-        raw, finish_reason, usage = _stream_completion(client, messages, model=PARSE_MODEL)
+        raw, finish_reason, usage = _stream_completion(client, messages, model=PARSE_MODEL, temperature=1.0)
         print(
             f"[K2.5 PARSE] in={usage['input']} (cached={usage['cached']}) "
             f"out={usage['output']} | finish={finish_reason} | len={len(raw)}"
